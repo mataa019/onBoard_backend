@@ -13,8 +13,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  // Connection URLs are no longer stored in the schema; configure them in prisma.config.ts
-  // See: https://pris.ly/d/config-datasource
+  url      = env("DATABASE_URL")
 }
 
 // ==========================================
@@ -27,6 +26,7 @@ model User {
   password          String
   firstName         String
   lastName          String
+  role              String    @default("user")
   phone             String?
   avatar            String?
   emailVerified     Boolean   @default(false)
