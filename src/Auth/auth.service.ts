@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger, ConflictException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 
@@ -12,7 +13,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
-    //Login, Register
+    //Login method
       async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
     this.logger.log(`Login attempt for email: ${email}`);
@@ -25,8 +26,7 @@ export class AuthService {
     if (!user || !isPasswordValid) {
       throw new UnauthorizedException('Incorrect email or password');
     }
-
-    const userRoles = ['user'];  // Default role
+    const userRoles = [user.role];  // Use role from user record
     const payload = { 
       sub: user.id, 
       email: user.email, 
@@ -37,6 +37,56 @@ export class AuthService {
     return {
       message: 'Login successful',
       accessToken,
+    };
+  }
+
+  // Register method
+  async register(registerDto: RegisterDto) {
+    const { email, password, firstName, lastName } = registerDto;
+      const existingUser = await this.prisma.user.findUnique({
+      where: { email }
+    });
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user with default role
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        role: 'user', // Default role
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+      }
+    });
+
+    this.logger.log(`User registered successfully: ${email} (ID: ${user.id})`);
+
+    // Generate JWT token
+    const payload = { sub: user.id, email: user.email, roles: [user.role] };
+    const accessToken = this.jwtService.sign(payload);
+    return {
+      message: 'Registration successful',
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      }
     };
   }
 
