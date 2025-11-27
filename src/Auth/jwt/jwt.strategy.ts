@@ -15,7 +15,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    // Fetch the user from DB to get the latest data (roles, status, etc.)
     const user = await this.prisma.user.findUnique({ 
       where: { id: payload.sub },
       select: {
@@ -29,12 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-
-    // Use roles from JWT payload (set during login)
-    // Once you add 'role' field to User model, fetch it here instead
     const roles = payload.roles ?? [];
-
-    // Return minimal user object to attach to request
     return {
       id: user.id,
       email: user.email,
