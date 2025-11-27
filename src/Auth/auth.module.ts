@@ -4,8 +4,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { RolesGuard } from './jwt/guards/roles.guard';
 
 @Module({
   imports: [

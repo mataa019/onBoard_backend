@@ -3,10 +3,10 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
-import { Roles } from './decorators/roles.decorator';
-import { User } from './decorators/user.decorator';
+import { Roles } from './jwt/decorators/roles.decorator';
+import { User } from './jwt/decorators/user.decorator';
 import { Role } from './roles';
+import { RolesGuard } from './jwt/guards/roles.guard';
 
 @Controller('auth')
 export class AuthController {

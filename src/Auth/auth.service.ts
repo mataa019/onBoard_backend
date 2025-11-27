@@ -24,6 +24,7 @@ export class AuthService {
 
     const isPasswordValid = user ? await bcrypt.compare(password, user.password) : false;
     if (!user || !isPasswordValid) {
+      this.logger.warn(`Login failed Incorrect email or password`);
       throw new UnauthorizedException('Incorrect email or password');
     }
     const userRoles = [user.role];  // Use role from user record
