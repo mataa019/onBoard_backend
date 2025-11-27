@@ -23,6 +23,12 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getCurrentUser(@User() user: any) {
+    return this.authService.getCurrentUser(user.id);
+  }
+
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@User() user: any) {
