@@ -42,7 +42,7 @@ export class AuthController {
     };
   }
 
-  @Post('create-admin')
+  @Post('register-admin')
   async createAdmin(@Body() registerDto: RegisterDto) {
     return this.authService.createAdmin(registerDto);
   }
