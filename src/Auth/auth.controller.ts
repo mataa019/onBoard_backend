@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Patch, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -40,5 +40,10 @@ export class AuthController {
       message: 'This is an admin-only route',
       user,
     };
+  }
+
+  @Post('create-admin')
+  async createAdmin(@Body() registerDto: RegisterDto) {
+    return this.authService.createAdmin(registerDto);
   }
 }

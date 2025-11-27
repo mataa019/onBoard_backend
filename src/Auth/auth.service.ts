@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Logger, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -87,6 +87,59 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+      }
+    };
+  }
+
+  // Create admin user directly
+  async createAdmin(registerDto: RegisterDto) {
+    const { email, password, firstName, lastName } = registerDto;
+    
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email }
+    });
+    
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user with admin role
+    const admin = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        role: 'admin',
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+      }
+    });
+
+    this.logger.log(`Admin user created: ${email} (ID: ${admin.id})`);
+
+    // Generate JWT token
+    const payload = { sub: admin.id, email: admin.email, roles: [admin.role] };
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      message: 'Admin created successfully',
+      accessToken,
+      user: {
+        id: admin.id,
+        email: admin.email,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        role: admin.role,
       }
     };
   }
