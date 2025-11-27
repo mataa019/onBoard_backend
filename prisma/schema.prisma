@@ -1,0 +1,309 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// OnboardFlow Database Schema
+// Portfolio & Project Onboarding Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  // Connection URLs are no longer stored in the schema; configure them in prisma.config.ts
+  // See: https://pris.ly/d/config-datasource
+}
+
+// ==========================================
+// 🔐 AUTHENTICATION & USER MANAGEMENT
+// ==========================================
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  avatar            String?
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorSecret   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  portfolio         Portfolio?
+  projects          Project[]
+  documents         Document[]
+  integrations      Integration[]
+  refreshTokens     RefreshToken[]
+  passwordResets    PasswordReset[]
+  notificationPrefs NotificationPreference?
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+// ==========================================
+// 👤 PORTFOLIO / PROFILE
+// ==========================================
+
+model Portfolio {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  username     String   @unique
+  headline     String?
+  summary      String?  @db.Text
+  location     String?
+  website      String?
+  linkedinUrl  String?
+  githubUrl    String?
+  coverImage   String?
+  isPublic     Boolean  @default(true)
+  shareableLink String? @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experiences  Experience[]
+  education    Education[]
+  skills       Skill[]
+
+  @@map("portfolios")
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  portfolioId String
+  title       String
+  company     String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+  description String?   @db.Text
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@map("experiences")
+}
+
+model Education {
+  id          String   @id @default(cuid())
+  portfolioId String
+  school      String
+  degree      String?
+  field       String?
+  startYear   Int
+  endYear     Int?
+  current     Boolean  @default(false)
+  description String?  @db.Text
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@map("education")
+}
+
+model Skill {
+  id          String     @id @default(cuid())
+  portfolioId String
+  name        String
+  level       SkillLevel @default(INTERMEDIATE)
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, name])
+  @@map("skills")
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+// ==========================================
+// 📁 PROJECTS
+// ==========================================
+
+model Project {
+  id            String        @id @default(cuid())
+  userId        String
+  name          String
+  description   String?       @db.Text
+  githubLink    String?
+  liveUrl       String?
+  shareableLink String?       @unique
+  status        String        @default("IN_PROGRESS")
+  featured      Boolean       @default(false)
+  order         Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images ProjectImage[]
+  tags   ProjectTag[]
+
+  @@map("projects")
+}
+
+model ProjectImage {
+  id        String   @id @default(cuid())
+  projectId String
+  url       String
+  alt       String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_images")
+}
+
+model ProjectTag {
+  id        String @id @default(cuid())
+  projectId String
+  name      String
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, name])
+  @@map("project_tags")
+}
+
+// ==========================================
+// 📄 DOCUMENTS
+// ==========================================
+
+model Document {
+  id         String           @id @default(cuid())
+  userId     String
+  name       String
+  type       String
+  category   DocumentCategory
+  fileName   String
+  fileSize   String
+  fileUrl    String
+  mimeType   String?
+  expiryDate DateTime?
+  isPublic   Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+enum DocumentCategory {
+  IDENTIFICATION
+  CERTIFICATES
+  LICENSES
+  EDUCATION
+  PROFESSIONAL
+  OTHER
+}
+
+
+
+// ==========================================
+// ⚙️ SETTINGS & PREFERENCES
+// ==========================================
+
+model NotificationPreference {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  emailNotifications Boolean  @default(true)
+  pushNotifications  Boolean  @default(true)
+  projectUpdates     Boolean  @default(true)
+  documentExpiry     Boolean  @default(true)
+  weeklyDigest       Boolean  @default(false)
+  marketingEmails    Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// ==========================================
+// 🔗 INTEGRATIONS
+// ==========================================
+
+model Integration {
+  id           String              @id @default(cuid())
+  userId       String
+  provider     IntegrationProvider
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  profileData  Json?
+  connected    Boolean             @default(false)
+  connectedAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@map("integrations")
+}
+
+enum IntegrationProvider {
+  GITHUB
+  LINKEDIN
+  GOOGLE
+  SLACK
+}
