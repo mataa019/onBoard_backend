@@ -25,15 +25,13 @@ export class AuthService {
     if (!user || !isPasswordValid) {
       throw new UnauthorizedException('Incorrect email or password');
     }
-    // Include roles if present on the user (supports `role` or `roles` fields)
-    const userRoles = [] as string[];
-    if ((user as any).roles && Array.isArray((user as any).roles)) {
-      userRoles.push(...(user as any).roles);
-    } else if ((user as any).role) {
-      userRoles.push((user as any).role);
-    }
 
-    const payload = { sub: user.id, email: user.email, username: (user as any).username, roles: userRoles };
+    const userRoles = ['user'];  // Default role
+    const payload = { 
+      sub: user.id, 
+      email: user.email, 
+      roles: userRoles 
+    };
     const accessToken = this.jwtService.sign(payload);
     this.logger.log(`Login successful for: ${email} (ID: ${user.id})`);
     return {
