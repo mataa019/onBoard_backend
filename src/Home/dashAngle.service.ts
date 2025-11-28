@@ -11,7 +11,11 @@ export class DashAngleService {
   async getAllProjects(userId: string) {
     return this.prisma.project.findMany({
       where: { userId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        githubLink: true,
         tags: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -37,7 +41,13 @@ export class DashAngleService {
           githubLink: githubUrl,
           tags: tags ? { deleteMany: {}, create: tags.map((t: string) => ({ name: t })) } : undefined,
         },
-        include: { tags: true },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          githubLink: true,
+          tags: { select: { name: true } },
+        },
       });
     }
 
@@ -50,7 +60,13 @@ export class DashAngleService {
         githubLink: githubUrl,
         tags: tags ? { create: tags.map((t: string) => ({ name: t })) } : undefined,
       },
-      include: { tags: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        githubLink: true,
+        tags: { select: { name: true } },
+      },
     });
   }
 
