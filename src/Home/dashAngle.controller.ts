@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@n
 import { DashAngleService } from './dashAngle.service';
 import { JwtAuthGuard } from '../Auth/jwt/jwt-auth.guard';
 import { User } from '../Auth/jwt/decorators/user.decorator';
+import { CreateProjectDto, UpdateProjectDto } from './dto/create-project.dto';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
@@ -14,12 +15,12 @@ export class DashAngleController {
   }
 
   @Post()
-  create(@User() user: any, @Body() body: any) {
+  create(@User() user: any, @Body() body: CreateProjectDto) {
     return this.dashAngleService.saveProject(user.id, body);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @User() user: any, @Body() body: any) {
+  update(@Param('id') id: string, @User() user: any, @Body() body: UpdateProjectDto) {
     return this.dashAngleService.saveProject(user.id, body, id);
   }
 
